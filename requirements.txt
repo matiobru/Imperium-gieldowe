@@ -2,3 +2,6 @@ streamlit
 pandas
 yfinance
 ta
+plotly
+requests
+
