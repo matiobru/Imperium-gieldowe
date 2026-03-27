@@ -288,13 +288,13 @@ if not portfel_df.empty:
 
     # ZAKŁADKA 4: GEMINI AI
     with tab4:
-        st.header("🧠 AI Dyrektor Finansowy (Model: Gemini 1.5 Flash)")
+        st.header("🧠 AI Dyrektor Finansowy (Model: Gemini 3.1 pro)")
         if gemini_api_key:
             if st.button("🤖 Generuj Raport Strategiczny"):
                 with st.spinner("Czytam gęste dane z rynku i szukam snajperskich wejść na 2 tygodnie..."):
                     try:
                         genai.configure(api_key=gemini_api_key)
-                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        model = genai.GenerativeModel('gemini-3.1-pro')
                         skaner_txt = wyniki_df[wyniki_df['Sygnały'] != "Brak"].to_string(index=False)
                         
                         prompt = f"""
