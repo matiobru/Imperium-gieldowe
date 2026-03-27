@@ -294,7 +294,7 @@ if not portfel_df.empty:
                 with st.spinner("Czytam gęste dane z rynku i szukam snajperskich wejść na 2 tygodnie..."):
                     try:
                         genai.configure(api_key=gemini_api_key)
-                        model = genai.GenerativeModel('gemini-3.1-pro-preview')
+                        model = genai.GenerativeModel('gemini-pro-latest')
                         skaner_txt = wyniki_df[wyniki_df['Sygnały'] != "Brak"].to_string(index=False)
                         
                         prompt = f"""
