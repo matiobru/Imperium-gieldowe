@@ -294,19 +294,20 @@ if not portfel_df.empty:
                 with st.spinner("Czytam gęste dane z rynku i szukam snajperskich wejść na 2 tygodnie..."):
                     try:
                         genai.configure(api_key=gemini_api_key)
-                        model = genai.GenerativeModel('gemini-3.1-pro')
+                        model = genai.GenerativeModel('gemini-3.1-pro-preview')
                         skaner_txt = wyniki_df[wyniki_df['Sygnały'] != "Brak"].to_string(index=False)
                         
                         prompt = f"""
-                        Jesteś Quants Swing Traderem. Twój ścisły horyzont inwestycyjny to 10-14 sesji giełdowych.
+                        Jesteś Quants Swing Traderem. Twój ścisły horyzont inwestycyjny to 5-14 sesji giełdowych.
                         Masz przed sobą dzisiejszy skrypt skanera rynku:
                         {skaner_txt}
                         
                         ZADANIE:
-                        1. Wskaż jedną, maksymalnie dwie najlepsze spółki do ataku na najbliższe 2 tygodnie.
-                        2. Uzasadnij wybór powołując się KONKRETNIE na tagi "STOCH CROSS" (dla timingu wejścia), "W%R WYSTRZAŁ", "RVOL" oraz "AKUMULACJA". 
+                        1. Wskażnajlepsze spółki do ataku na najbliższe 1-2 tygodnie.
+                        2. Uzasadnij wybór powołując się KONKRETNIE na tagi "STOCH CROSS" (dla timingu wejścia), "W%R WYSTRZAŁ", "RVOL" oraz "AKUMULACJA" oraz swoje spostrzezenia i dodaj czy jakies swiece sie tworzą oraz poszukaj dodatkowych informacji. 
                         3. Wyjaśnij, dlaczego te parametry dają nam przewagę w tak krótkim horyzoncie.
-                        Pisz jak profesjonalista z Wall Street - konkretnie, krótko i w punkt. Nie marnuj słów.
+                        Pisz jak profesjonalista z Wall Street - konkretnie, w punkt. Nie marnuj słów.
+                        4. oceń moje portfolio i jak powiniem sie zachować w kolejnych sesjach.
                         """
                         response = model.generate_content(prompt)
                         st.markdown(response.text)
