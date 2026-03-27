@@ -288,7 +288,7 @@ if not portfel_df.empty:
 
     # ZAKŁADKA 4: GEMINI AI
     with tab4:
-        st.header("🧠 AI Dyrektor Finansowy (Model: Gemini 3.1 pro)")
+        st.header("🧠 AI Dyrektor Finansowy (Model: Gemini-flash-latest)")
         if gemini_api_key:
             if st.button("🤖 Generuj Raport Strategiczny"):
                 with st.spinner("Czytam gęste dane z rynku i szukam snajperskich wejść na 2 tygodnie..."):
