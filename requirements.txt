@@ -4,4 +4,4 @@ yfinance
 ta
 plotly
 requests
-
+google-generativeai
