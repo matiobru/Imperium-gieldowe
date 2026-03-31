@@ -286,35 +286,90 @@ if not portfel_df.empty:
             fig.update_layout(title=f'Analiza Techniczna: {wybrany_ticker}', yaxis_title='Cena $', xaxis_rangeslider_visible=False, template='plotly_dark', height=600)
             st.plotly_chart(fig, use_container_width=True)
 
-    # ZAKŁADKA 4: GEMINI AI
+        # ZAKŁADKA 4: GEMINI AI INTERAKTYWNE
     with tab4:
-        st.header("🧠 AI Dyrektor Finansowy (Model: Gemini-flash-latest)")
+        st.header("🧠 AI Dyrektor Finansowy (Interaktywny)")
         if gemini_api_key:
-            if st.button("🤖 Generuj Raport Strategiczny"):
-                with st.spinner("Czytam gęste dane z rynku i szukam snajperskich wejść na 2 tygodnie..."):
-                    try:
-                        genai.configure(api_key=gemini_api_key)
-                        model = genai.GenerativeModel('gemini-flash-latest')
-                        skaner_txt = wyniki_df[wyniki_df['Sygnały'] != "Brak"].to_string(index=False)
+            genai.configure(api_key=gemini_api_key)
+            
+            # Wymuszenie wskazanego przez Ciebie najnowszego, najszybszego modelu
+            model = genai.GenerativeModel('gemini-flash-latest')
+            
+            # Dzielimy zakładkę na dwie kolumny (Raport i Czat)
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.subheader("📊 Błyskawiczny Raport")
+                st.write("Jednym kliknięciem podsumuj swój portfel i najlepsze okazje z rynku.")
+                if st.button("🤖 Generuj Raport Strategiczny"):
+                    with st.spinner("Analizuję Twój portfel i skanuję rynek..."):
+                        try:
+                            # 1. Kontekst Portfela
+                            portfel_txt = pd.DataFrame(portfel_raport).to_string(index=False) if portfel_raport else "Brak pozycji w portfelu."
+                            
+                            # 2. Kontekst Skanera (TOP 5)
+                            okazje_df = wyniki_df[wyniki_df['Sygnały'] != "Brak"]
+                            top_okazje = okazje_df.sort_values(by="Wystrzał 5D", ascending=False).head(5)
+                            skaner_txt = top_okazje.to_string(index=False) if not top_okazje.empty else "Brak silnych sygnałów na rynku."
+                            
+                            prompt = f"""
+                            Jesteś bezwzględnym Quants Swing Traderem (horyzont 10-14 dni).
+                            
+                            === STAN MOJEGO PORTFELA ===
+                            {portfel_txt}
+                            
+                            === TOP 5 OKAZJI NA RYNKU ===
+                            {skaner_txt}
+                            
+                            ZADANIE:
+                            1. Oceń mój portfel: czy któraś spółka ma status "Zagrożenie" lub zły trend (EMA10<20) i powinienem ją ściąć?
+                            2. Wskaż JEDNĄ najlepszą nową okazję z rynku do kupienia już jutro i uzasadnij to.
+                            Pisz prosto z mostu, jak profesjonalista. Max 5 krótkich zdań.
+                            """
+                            response = model.generate_content(prompt)
+                            st.info(response.text)
+                        except Exception as e:
+                            st.error(f"Błąd API. Szczegóły: {e}")
+            
+            with col2:
+                st.subheader("💬 Zapytaj o szczegóły")
+                st.write("Masz wątpliwości? Dopytaj stratega o konkretną spółkę z portfela lub rynku.")
+                
+                # Inicjalizacja historii czatu (aby pamiętał rozmowę, dopóki nie odświeżysz strony)
+                if "messages" not in st.session_state:
+                    st.session_state.messages = []
+                
+                # Renderowanie starych wiadomości
+                for msg in st.session_state.messages:
+                    with st.chat_message(msg["role"]):
+                        st.markdown(msg["content"])
+                
+                # Pole do wpisywania pytań
+                if user_prompt := st.chat_input("Napisz pytanie, np. 'Czy trzymać dzisiaj NVDA?'"):
+                    st.session_state.messages.append({"role": "user", "content": user_prompt})
+                    with st.chat_message("user"):
+                        st.markdown(user_prompt)
                         
-                        prompt = f"""
-                        Jesteś Quants Swing Traderem. Twój ścisły horyzont inwestycyjny to 5-14 sesji giełdowych.
-                        Masz przed sobą dzisiejszy skrypt skanera rynku:
-                        {skaner_txt}
-                        
-                        ZADANIE:
-                        1. Wskażnajlepsze spółki do ataku na najbliższe 1-2 tygodnie.
-                        2. Uzasadnij wybór powołując się KONKRETNIE na tagi "STOCH CROSS" (dla timingu wejścia), "W%R WYSTRZAŁ", "RVOL" oraz "AKUMULACJA" oraz swoje spostrzezenia i dodaj czy jakies swiece sie tworzą oraz poszukaj dodatkowych informacji. 
-                        3. Wyjaśnij, dlaczego te parametry dają nam przewagę w tak krótkim horyzoncie.
-                        Pisz jak profesjonalista z Wall Street - konkretnie, w punkt. Nie marnuj słów.
-                        4. oceń moje portfolio i jak powiniem sie zachować w kolejnych sesjach.
-                        """
-                        response = model.generate_content(prompt)
-                        st.markdown(response.text)
-                    except Exception as e:
-                        st.error(f"Błąd Gemini: Sprawdź swój klucz API. Szczegóły: {e}")
+                    with st.chat_message("assistant"):
+                        with st.spinner("Szukam odpowiedzi w danych..."):
+                            try:
+                                # Pobieramy świeże dane, żeby AI nie zmyślało
+                                portfel_kontekst = pd.DataFrame(portfel_raport).to_string(index=False) if portfel_raport else "Brak portfela"
+                                okazje_kontekst = wyniki_df[wyniki_df['Sygnały'] != "Brak"].head(5).to_string(index=False)
+                                
+                                full_prompt = f"""
+                                Kontekst rynkowy użytkownika na dzisiaj:
+                                Jego obecny portfel: {portfel_kontekst}
+                                Najlepsze okazje ze skanera: {okazje_kontekst}
+                                
+                                Użytkownik zadaje Ci pytanie: "{user_prompt}"
+                                
+                                Odpowiedz, posiłkując się powyższymi danymi. Bądź precyzyjny.
+                                """
+                                response_chat = model.generate_content(full_prompt)
+                                st.markdown(response_chat.text)
+                                st.session_state.messages.append({"role": "assistant", "content": response_chat.text})
+                            except Exception as e:
+                                st.error(f"Błąd: {e}")
         else:
-            st.warning("⚠️ Wpisz swój Gemini API Key w lewym panelu bocznym, aby odblokować Dyrektora Finansowego.")
-
-else:
-    st.warning("Baza Danych jest pusta lub brakuje dostępu. Upewnij się, że link do Arkusza Google został dodany poprawnie.")
+            st.warning("⚠️ Wpisz swój Gemini API Key w lewym panelu bocznym.")
